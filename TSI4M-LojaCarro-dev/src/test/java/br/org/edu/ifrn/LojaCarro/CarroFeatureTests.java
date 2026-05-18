@@ -41,6 +41,6 @@ class CarroFeatureTests {
        
         // teste de falha do pipeline bom dia = deu certo, boa noite = deu errado
         mockMvc.perform(get("/teste"))
-                .andExpect(content().string("bom dia"));
+                .andExpect(content().string("boa noite"));
     }
 }
