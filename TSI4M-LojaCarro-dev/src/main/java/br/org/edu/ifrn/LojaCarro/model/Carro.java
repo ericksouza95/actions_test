@@ -8,17 +8,31 @@ public class Carro {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(length = 100, nullable = false)
+    private String marca;
+
+    @Column(length = 100, nullable = false)
     private String modelo;
+
     private int ano;
+
     private Double valor;
 
-    // Getters e Setters
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getMarca() {
+        return marca;
+    }
+
+    public void setMarca(String marca) {
+        this.marca = marca;
     }
 
     public String getModelo() {
