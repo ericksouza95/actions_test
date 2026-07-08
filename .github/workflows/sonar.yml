@@ -1,0 +1,114 @@
+name: SonarCloud
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./TSI4M-LojaCarro-dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Prepare Maven Wrapper
+        run: chmod +x ./mvnw
+
+      - name: Run tests and coverage
+        run: ./mvnw -B verify
+
+      - name: Run SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          ./mvnw -B sonar:sonar
+          -Dsonar.organization=ericksouza95
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.token=$SONAR_TOKEN
+
+      - name: Verify zero code smells
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ericksouza95_actions_test
+        run: |
+          set -euo pipefail
+
+          report_file="target/sonar/report-task.txt"
+
+          if [[ ! -f "$report_file" ]]; then
+            echo "Sonar report task file was not generated at ${report_file}."
+            exit 1
+          fi
+
+          ce_task_url="$(grep '^ceTaskUrl=' "$report_file" | cut -d= -f2-)"
+          analysis_id=""
+
+          for attempt in {1..18}; do
+            task_response="$(curl -sSf -u "${SONAR_TOKEN}:" "$ce_task_url")"
+            task_status="$(echo "$task_response" | jq -r '.task.status')"
+
+            if [[ "$task_status" == "SUCCESS" ]]; then
+              analysis_id="$(echo "$task_response" | jq -r '.task.analysisId')"
+              break
+            fi
+
+            if [[ "$task_status" == "FAILED" || "$task_status" == "CANCELED" ]]; then
+              echo "Sonar background task ended with status: ${task_status}"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          if [[ -z "$analysis_id" || "$analysis_id" == "null" ]]; then
+            echo "Sonar analysis did not finish in time."
+            exit 1
+          fi
+
+          dashboard_url="$(grep '^dashboardUrl=' "$report_file" | cut -d= -f2-)"
+          pull_request="$(echo "$dashboard_url" | sed -n 's/.*[?&]pullRequest=\([^&]*\).*/\1/p')"
+
+          issues_url="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&types=CODE_SMELL&resolved=false"
+
+          if [[ -n "$pull_request" ]]; then
+            issues_url="${issues_url}&pullRequest=${pull_request}"
+          fi
+
+          response="$(curl -sSf -u "${SONAR_TOKEN}:" "$issues_url")"
+          code_smells="$(echo "$response" | jq -r '.total')"
+
+          if [[ -z "$code_smells" ]]; then
+            echo "Sonar did not return the code smell issue count."
+            exit 1
+          fi
+
+          echo "Code smells found: ${code_smells}"
+
+          if [[ "$code_smells" != "0" ]]; then
+            echo "Sonar found code smells. Fix them before merging."
+            exit 1
+          fi
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: TSI4M-LojaCarro-dev/target/site/jacoco/
+          retention-days: 14

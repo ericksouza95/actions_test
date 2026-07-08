@@ -1,9 +1,12 @@
-package br.org.edu.ifrn.LojaCarro.controllers;
+package br.org.edu.ifrn.lojacarro.controllers;
 
-import br.org.edu.ifrn.LojaCarro.model.Carro;
-import br.org.edu.ifrn.LojaCarro.services.CarroService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import br.org.edu.ifrn.lojacarro.model.Carro;
+import br.org.edu.ifrn.lojacarro.services.CarroService;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -12,8 +15,11 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class CarroController {
 
-    @Autowired
-    private CarroService carroService;
+    private final CarroService carroService;
+
+    public CarroController(CarroService carroService) {
+        this.carroService = carroService;
+    }
 
     // 1. SALVAR
     @GetMapping("/salvar")
@@ -42,14 +48,11 @@ public class CarroController {
     @GetMapping("/atualizar")
     public String atualizarCarro(@RequestParam Long id, @RequestParam String modelo, @RequestParam int ano, @RequestParam double valor) {
         Carro c = carroService.findById(id);
-        if (c != null) {
-            c.setModelo(modelo);
-            c.setAno(ano);
-            c.setValor(valor);
-            carroService.save(c);
-            return "Carro atualizado com sucesso!";
-        }
-        return "Carro não encontrado.";
+        c.setModelo(modelo);
+        c.setAno(ano);
+        c.setValor(valor);
+        carroService.save(c);
+        return "Carro atualizado com sucesso!";
     }
 
     // 5. DELETAR

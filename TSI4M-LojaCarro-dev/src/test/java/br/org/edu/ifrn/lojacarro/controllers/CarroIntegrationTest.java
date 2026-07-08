@@ -1,7 +1,7 @@
-package br.org.edu.ifrn.LojaCarro.controllers;
+package br.org.edu.ifrn.lojacarro.controllers;
 
-import br.org.edu.ifrn.LojaCarro.model.Carro;
-import br.org.edu.ifrn.LojaCarro.services.CarroService;
+import br.org.edu.ifrn.lojacarro.model.Carro;
+import br.org.edu.ifrn.lojacarro.services.CarroService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,25 +11,30 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import javax.transaction.Transactional;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional // Limpa o banco de dados automaticamente após a execução de cada teste
-public class CarroIntegrationTest {
+class CarroIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    private final MockMvc mockMvc;
 
-    @Autowired
-    private CarroService carroService;
+    private final CarroService carroService;
 
     private Carro carroTeste;
 
+    @Autowired
+    CarroIntegrationTest(MockMvc mockMvc, CarroService carroService) {
+        this.mockMvc = mockMvc;
+        this.carroService = carroService;
+    }
+
     @BeforeEach
-    public void setup() {
+    void setup() {
         // Cria um carro base no banco para testar o Buscar por ID, Atualizar, Listar e Deletar
         carroTeste = new Carro();
         carroTeste.setModelo("Civic");
@@ -40,48 +45,48 @@ public class CarroIntegrationTest {
 
     // 1. TESTE: Salvar Carro via URL
     @Test
-    public void deveSalvarCarroComSucesso() throws Exception {
-        mockMvc.perform(get("/carro/salvar")
+    void deveSalvarCarroComSucesso() {
+        assertDoesNotThrow(() -> mockMvc.perform(get("/carro/salvar")
                         .param("modelo", "Fusca")
                         .param("ano", "1978")
                         .param("valor", "25000.0"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Carro salvo com sucesso! Modelo: Fusca, Ano: 1978, Valor: R$ 25000.0"));
+                .andExpect(content().string("Carro salvo com sucesso! Modelo: Fusca, Ano: 1978, Valor: R$ 25000.0")));
     }
 
     // 2. TESTE: Listar Todos os Carros
     @Test
-    public void deveListarTodosOsCarros() throws Exception {
-        mockMvc.perform(get("/carro/listar"))
-                .andExpect(status().isOk());
+    void deveListarTodosOsCarros() {
+        assertDoesNotThrow(() -> mockMvc.perform(get("/carro/listar"))
+                .andExpect(status().isOk()));
     }
 
     // 3. TESTE: Procurar Carro por ID
     @Test
-    public void deveBuscarCarroPorId() throws Exception {
-        mockMvc.perform(get("/carro/buscar")
+    void deveBuscarCarroPorId() {
+        assertDoesNotThrow(() -> mockMvc.perform(get("/carro/buscar")
                         .param("id", carroTeste.getId().toString()))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk()));
     }
 
     // 4. TESTE: Atualizar dados de um Carro
     @Test
-    public void deveAtualizarCarro() throws Exception {
-        mockMvc.perform(get("/carro/atualizar")
+    void deveAtualizarCarro() {
+        assertDoesNotThrow(() -> mockMvc.perform(get("/carro/atualizar")
                         .param("id", carroTeste.getId().toString())
                         .param("modelo", "Civic Atualizado")
                         .param("ano", "2023")
                         .param("valor", "135000.0"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Carro atualizado com sucesso!"));
+                .andExpect(content().string("Carro atualizado com sucesso!")));
     }
 
     // 5. TESTE: Deletar um Carro
     @Test
-    public void deveDeletarCarro() throws Exception {
-        mockMvc.perform(get("/carro/deletar")
+    void deveDeletarCarro() {
+        assertDoesNotThrow(() -> mockMvc.perform(get("/carro/deletar")
                         .param("id", carroTeste.getId().toString()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Carro deletado com sucesso!"));
+                .andExpect(content().string("Carro deletado com sucesso!")));
     }
 }
