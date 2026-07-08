@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -79,11 +81,20 @@ jobs:
             exit 1
           fi
 
-          response="$(curl -sSf -u "${SONAR_TOKEN}:" "https://sonarcloud.io/api/measures/component?component=${SONAR_PROJECT_KEY}&metricKeys=code_smells")"
-          code_smells="$(echo "$response" | jq -r '.component.measures[]? | select(.metric == "code_smells") | .value // empty')"
+          dashboard_url="$(grep '^dashboardUrl=' "$report_file" | cut -d= -f2-)"
+          pull_request="$(echo "$dashboard_url" | sed -n 's/.*[?&]pullRequest=\([^&]*\).*/\1/p')"
+
+          issues_url="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&types=CODE_SMELL&resolved=false"
+
+          if [[ -n "$pull_request" ]]; then
+            issues_url="${issues_url}&pullRequest=${pull_request}"
+          fi
+
+          response="$(curl -sSf -u "${SONAR_TOKEN}:" "$issues_url")"
+          code_smells="$(echo "$response" | jq -r '.total')"
 
           if [[ -z "$code_smells" ]]; then
-            echo "Sonar did not return the code_smells metric."
+            echo "Sonar did not return the code smell issue count."
             exit 1
           fi
 
