@@ -1,8 +1,7 @@
-package br.org.edu.ifrn.LojaCarro.services;
+package br.org.edu.ifrn.lojacarro.services;
 
-import br.org.edu.ifrn.LojaCarro.model.Carro;
-import br.org.edu.ifrn.LojaCarro.repository.CarroRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import br.org.edu.ifrn.lojacarro.model.Carro;
+import br.org.edu.ifrn.lojacarro.repository.CarroRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,8 +9,11 @@ import java.util.List;
 @Service
 public class CarroService {
 
-    @Autowired
-    private CarroRepository carroRepository;
+    private final CarroRepository carroRepository;
+
+    public CarroService(CarroRepository carroRepository) {
+        this.carroRepository = carroRepository;
+    }
 
     // Método Salvar com REGRAS DE NEGÓCIO de verdade
     public Carro save(Carro c) {
@@ -40,7 +42,7 @@ public class CarroService {
 
     public void deleteById(Long id) {
         // Garante que só deleta se existir, usando a regra acima
-        this.findById(id);
+        findById(id);
         carroRepository.deleteById(id);
     }
 }
