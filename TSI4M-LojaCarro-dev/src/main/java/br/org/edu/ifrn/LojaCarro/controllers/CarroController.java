@@ -27,7 +27,7 @@ public class CarroController {
     }
 
     // 2. LISTAR TODOS
-    @GetMapping("/listar")
+    @GetMapping("/ListarCarros")
     public List<Carro> listarTodos() {
         return carroService.findAll(); // Certifique-se de que o Service tem o método findAll()
     }

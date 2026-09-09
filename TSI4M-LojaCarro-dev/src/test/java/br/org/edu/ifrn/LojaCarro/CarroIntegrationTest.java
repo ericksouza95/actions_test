@@ -52,7 +52,7 @@ public class CarroIntegrationTest {
     // 2. TESTE: Listar Todos os Carros
     @Test
     public void deveListarTodosOsCarros() throws Exception {
-        mockMvc.perform(get("/carro/listar"))
+        mockMvc.perform(get("/carro/ListarCarros"))
                 .andExpect(status().isOk());
     }
 
